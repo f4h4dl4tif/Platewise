@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key><string>Platewise</string>
+	<key>CFBundleDisplayName</key><string>Platewise</string>
+	<key>CFBundleExecutable</key><string>Platewise</string>
+	<key>CFBundleIdentifier</key><string>local.platewise.Platewise</string>
+	<key>CFBundleIconFile</key><string>AppIcon</string>
+	<key>CFBundlePackageType</key><string>APPL</string>
+	<key>CFBundleShortVersionString</key><string>1.0</string>
+	<key>CFBundleVersion</key><string>1</string>
+	<key>CFBundleDevelopmentRegion</key><string>en</string>
+	<key>LSApplicationCategoryType</key><string>public.app-category.food-and-drink</string>
+	<key>LSMinimumSystemVersion</key><string>14.0</string>
+	<key>NSHighResolutionCapable</key><true/>
+	<key>NSPrincipalClass</key><string>NSApplication</string>
+	<key>NSCameraUsageDescription</key><string>Platewise uses the camera to photograph a dish so Claude can identify it and suggest a recipe.</string>
+	<key>NSHumanReadableCopyright</key><string>Platewise, a meal planner with Snap &amp; Cook.</string>
+</dict>
+</plist>

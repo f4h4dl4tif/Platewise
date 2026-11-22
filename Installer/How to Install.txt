@@ -1,0 +1,104 @@
+How to install Platewise
+========================
+
+Snap & Cook (photo -> dish -> recipe) uses Apple Intelligence on your Mac:
+macOS 27 or later, a Mac with Apple silicon, and Apple Intelligence turned
+on. Meal planning, recipes and grocery lists work on macOS 14 or later.
+No account or API key is needed.
+
+Platewise isn't notarized by Apple, so on a new Mac macOS blocks it the
+first time. Pick ONE of the two ways below, and use the Terminal fixes if
+it fails.
+
+
+OPTION A: Installer package (Platewise-x.x.pkg)
+-----------------------------------------------
+1. Double-click Platewise-x.x.pkg.
+2. If macOS says it "can't be opened" or "could not verify" it: click Done,
+   open System Settings > Privacy & Security, scroll to Security and click
+   "Open Anyway" next to Platewise-x.x.pkg. Enter your password.
+3. Follow the installer. Platewise is installed in Applications and opens
+   itself.
+
+
+OPTION B: Disk image (Platewise-x.x.dmg)
+----------------------------------------
+1. Open the .dmg and drag Platewise onto the Applications folder.
+2. Open Platewise from Applications. If macOS blocks it, click Done (don't
+   move it to the Bin), then System Settings > Privacy & Security >
+   "Open Anyway".
+
+
+IF IT STILL FAILS: Terminal commands
+------------------------------------
+Open Terminal (Applications > Utilities > Terminal), paste a command, press
+Return and type your Mac password when asked (nothing shows as you type).
+
+1. The installer package won't open. Install it from Terminal instead
+   (change the path if the file isn't in Downloads):
+
+       sudo installer -pkg ~/Downloads/Platewise-*.pkg -target /
+
+2. Platewise is installed but won't open, or macOS says it is "damaged":
+
+       sudo xattr -cr /Applications/Platewise.app && open /Applications/Platewise.app
+
+3. "Open Anyway" doesn't appear, or the .pkg / .dmg itself is blocked:
+
+       xattr -c ~/Downloads/Platewise-*
+
+   then double-click the file again.
+
+4. The Camera button shows a black screen or says access is off:
+
+       tccutil reset Camera local.platewise.Platewise
+
+   then quit and reopen Platewise, click Camera, and choose Allow
+   (or turn it on in System Settings > Privacy & Security > Camera).
+
+5. Snap & Cook says Apple Intelligence isn't available. Check it's on in
+   System Settings > Apple Intelligence & Siri (it may need to finish
+   downloading), confirm this shows "arm64" (Apple silicon):
+
+       uname -m
+
+   and that the helper is installed (should print a path):
+
+       ls /Applications/Platewise.app/Contents/MacOS/platewise-ai
+
+   then click Check Again in Platewise's Settings.
+
+6. Platewise keeps asking for your Keychain password, or forgets your
+   YouTube key:
+
+       security delete-generic-password -s local.platewise.Platewise
+
+   then reopen Platewise and paste the key again in Settings.
+
+7. Check the macOS version (14+ for Platewise, 27+ for Snap & Cook):
+
+       sw_vers -productVersion
+
+
+AFTER INSTALLING
+----------------
+1. Click Settings in the sidebar and check Apple Intelligence says
+   "Ready". Dish recognition and recipes run on your Mac, free, and your
+   photos never leave it.
+2. Optional: paste a free YouTube Data API v3 key to see the top 3
+   tutorial videos inside each recipe. Without it you get a YouTube
+   search link instead.
+3. Snap & Cook: drop a food photo in (or use Camera / Choose / Paste) and
+   press Command-Return. Pick the right match to get the full recipe,
+   nutrition and videos, then add it to your meal plan or grocery list.
+4. Meal Plan: drag recipes from the right onto any day, then press
+   Build Grocery List.
+
+Your recipes, plans and photos are saved in
+~/Library/Application Support/Platewise. The optional YouTube key is in
+your Mac's Keychain.
+
+To uninstall (this also deletes your recipes and plans): quit Platewise,
+then run
+
+       rm -rf /Applications/Platewise.app ~/Library/Application\ Support/Platewise
