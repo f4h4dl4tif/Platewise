@@ -8,17 +8,35 @@ struct PlannerView: View {
     @State private var drawerSearch = ""
     @State private var toast: String?
     @State private var confirmClear = false
+    @Environment(\.glassOn) private var glassOn
 
     private var days: [Date] { Days.week(from: weekStart) }
 
     var body: some View {
-        VStack(spacing: 0) {
-            toolbar
-            Divider()
-            HStack(spacing: 0) {
-                ScrollView([.vertical, .horizontal]) { grid.padding(16) }
-                Divider()
-                drawer.frame(width: 240)
+        Group {
+            if glassOn {
+                VStack(spacing: 0) {
+                    toolbar
+                        .glassPanel(true, in: RoundedRectangle(cornerRadius: 18))
+                        .padding([.horizontal, .top], 14)
+                    HStack(spacing: 0) {
+                        ScrollView([.vertical, .horizontal]) { grid.padding(16) }
+                        drawer
+                            .glassPanel(true, in: RoundedRectangle(cornerRadius: 18))
+                            .frame(width: 240)
+                            .padding([.trailing, .vertical], 14)
+                    }
+                }
+            } else {
+                VStack(spacing: 0) {
+                    toolbar
+                    Divider()
+                    HStack(spacing: 0) {
+                        ScrollView([.vertical, .horizontal]) { grid.padding(16) }
+                        Divider()
+                        drawer.frame(width: 240)
+                    }
+                }
             }
         }
         .sheet(item: $open) { r in
@@ -36,20 +54,22 @@ struct PlannerView: View {
 
     private var toolbar: some View {
         HStack(spacing: 10) {
-            Button { shift(-7) } label: { Image(systemName: "chevron.left") }
-            Button { shift(7) } label: { Image(systemName: "chevron.right") }
+            Button { shift(-7) } label: { Image(systemName: "chevron.left") }.glassButtons(glassOn)
+            Button { shift(7) } label: { Image(systemName: "chevron.right") }.glassButtons(glassOn)
             Text(rangeTitle).font(.title2.bold())
             if !Days.calendar.isDate(weekStart, inSameDayAs: Days.weekStart(for: Date())) {
-                Button("This Week") { weekStart = Days.weekStart(for: Date()) }
+                Button("This Week") { weekStart = Days.weekStart(for: Date()) }.glassButtons(glassOn)
             }
             Spacer()
             Button(role: .destructive) { confirmClear = true } label: { Label("Clear Week", systemImage: "trash") }
+                .glassButtons(glassOn)
             Button {
                 let n = store.buildGrocery(week: weekStart)
                 toast = n == 0 ? "No meals planned this week yet" : "Grocery list built from this week's meals"
                 if n > 0 { store.section = .grocery }
             } label: { Label("Build Grocery List", systemImage: "cart") }
                 .buttonStyle(.borderedProminent)
+                .glassButtons(glassOn, prominent: true)
         }
         .controlSize(.large)
         .padding(.horizontal, 16).padding(.vertical, 10)
@@ -110,6 +130,7 @@ struct PlannerView: View {
                 }
             }
             .listStyle(.plain)
+            .scrollContentBackground(glassOn ? .hidden : .automatic)
             Button { store.section = .snap } label: { Label("Snap a new dish", systemImage: "camera.viewfinder") }
                 .buttonStyle(.borderless)
         }
@@ -129,6 +150,7 @@ private struct PlanCell: View {
     let slot: MealSlot
     @Binding var open: Recipe?
     @State private var targeted = false
+    @Environment(\.glassOn) private var glassOn
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -168,8 +190,7 @@ private struct PlanCell: View {
         }
         .padding(6)
         .frame(minWidth: 128, maxWidth: .infinity, minHeight: 96, alignment: .topLeading)
-        .background(targeted ? Theme.accent.opacity(0.12) : Theme.card, in: RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(targeted ? Theme.accent : Theme.subtle, lineWidth: targeted ? 2 : 1))
+        .modifier(CellSurface(targeted: targeted, glassOn: glassOn))
         .dropDestination(for: String.self) { ids, _ in
             var added = false
             for id in ids {
@@ -177,5 +198,23 @@ private struct PlanCell: View {
             }
             return added
         } isTargeted: { targeted = $0 }
+    }
+}
+
+/// A plan cell's background: the solid card, or glass when the Liquid Glass theme is on.
+private struct CellSurface: ViewModifier {
+    let targeted: Bool
+    let glassOn: Bool
+
+    func body(content: Content) -> some View {
+        if glassOn {
+            content
+                .glassPanel(true, in: RoundedRectangle(cornerRadius: 12), tint: targeted ? Theme.accent.opacity(0.35) : nil)
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.accent, lineWidth: targeted ? 2 : 0))
+        } else {
+            content
+                .background(targeted ? Theme.accent.opacity(0.12) : Theme.card, in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(targeted ? Theme.accent : Theme.subtle, lineWidth: targeted ? 2 : 1))
+        }
     }
 }

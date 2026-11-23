@@ -2,8 +2,19 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var store: Store
+    @AppStorage(GlassTheme.key) private var glassTheme = false
+    @Environment(\.glassOn) private var glassOn
     var body: some View {
         Form {
+            Section("Appearance") {
+                Toggle(isOn: $glassTheme) {
+                    Text("Liquid Glass theme")
+                    Text(GlassTheme.supported ? "Floating toolbars, panels and buttons use Apple's Liquid Glass."
+                                              : "Requires macOS 26.")
+                }
+                .disabled(!GlassTheme.supported)
+            }
+
             Section {
                 switch store.aiStatus {
                 case .checking:
@@ -63,6 +74,7 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
+        .scrollContentBackground(glassOn ? .hidden : .automatic)
     }
 
     @ViewBuilder private func keyStatus(has: Bool) -> some View {

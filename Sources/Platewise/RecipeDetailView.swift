@@ -15,6 +15,7 @@ struct RecipeDetailView: View {
     @State private var toast: String?
     @State private var fetchingVideos = false
     @State private var confirmDelete = false
+    @Environment(\.glassOn) private var glassOn
 
     private var saved: Recipe? { store.recipe(recipe.id) }
     private var current: Recipe { saved ?? recipe }
@@ -83,6 +84,7 @@ struct RecipeDetailView: View {
         HStack(spacing: 10) {
             Button { showPlan = true } label: { Label("Add to Meal Plan", systemImage: "calendar.badge.plus") }
                 .buttonStyle(.borderedProminent)
+                .glassButtons(glassOn, prominent: true)
                 .popover(isPresented: $showPlan, arrowEdge: .bottom) {
                     AddToPlanPopover(defaultServings: store.prefs.householdSize) { day, slot, n in
                         let r = store.saveRecipe(current, photo: photo)
@@ -114,6 +116,7 @@ struct RecipeDetailView: View {
                     }
                 } label: { Label("Make it…", systemImage: "wand.and.stars") }
                     .fixedSize()
+                    .glassMenu(glassOn)
             }
             Spacer()
             if let onEdit { Button("Edit", systemImage: "pencil", action: onEdit) }
@@ -122,6 +125,7 @@ struct RecipeDetailView: View {
             }
         }
         .controlSize(.large)
+        .glassButtons(glassOn)
     }
 
     @ViewBuilder private var warnings: some View {
@@ -139,7 +143,7 @@ struct RecipeDetailView: View {
     }
 
     private var ingredients: some View {
-        Card {
+        Card(readable: true) {
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
                     Text("Ingredients").font(.title3.bold())
@@ -160,7 +164,7 @@ struct RecipeDetailView: View {
     }
 
     private var steps: some View {
-        Card {
+        Card(readable: true) {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Method").font(.title3.bold())
                 ForEach(Array(current.steps.enumerated()), id: \.offset) { i, step in
@@ -203,7 +207,7 @@ struct RecipeDetailView: View {
     }
 
     private var tips: some View {
-        Card {
+        Card(readable: true) {
             VStack(alignment: .leading, spacing: 8) {
                 Label("Tips", systemImage: "lightbulb").font(.title3.bold())
                 ForEach(current.tips, id: \.self) { Text("• " + $0).fixedSize(horizontal: false, vertical: true) }
@@ -218,6 +222,7 @@ struct RecipeDetailView: View {
                 HStack { ProgressView().controlSize(.small); Text("Finding videos…").foregroundStyle(.secondary) }
             } else if current.videos.isEmpty {
                 Button { fetchVideos() } label: { Label("Find Videos", systemImage: "magnifyingglass") }
+                    .glassButtons(glassOn)
             } else {
                 ForEach(current.videos) { VideoRow(video: $0) }
                 if store.youtubeKey.isEmpty {

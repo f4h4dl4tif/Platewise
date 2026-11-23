@@ -95,13 +95,16 @@ struct ScanView: View {
     @State private var showImporter = false
     @State private var dropTargeted = false
     @State private var customName = ""
+    @Environment(\.glassOn) private var glassOn
 
     var body: some View {
         HStack(spacing: 0) {
             photoPanel
                 .frame(width: 360)
                 .padding(20)
-            Divider()
+                .glassPanel(glassOn, in: RoundedRectangle(cornerRadius: 22))
+                .padding(glassOn ? 14 : 0)
+            if !glassOn { Divider() }
             results
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
@@ -124,8 +127,10 @@ struct ScanView: View {
                         .strokeBorder(style: StrokeStyle(lineWidth: 2, dash: scan.image == nil ? [7] : []))
                         .foregroundStyle(dropTargeted ? Theme.accent : Color.secondary.opacity(0.35)))
                 if let img = scan.image {
-                    Image(nsImage: img).resizable().scaledToFill()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    // Fill the fixed drop zone without letting a tall or wide photo grow the
+                    // layout: Color.clear takes the zone's size, the image overlays and is clipped.
+                    Color.clear
+                        .overlay { Image(nsImage: img).resizable().scaledToFill() }
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                         .overlay(alignment: .topTrailing) {
                             Button { scan.clear() } label: {
@@ -143,7 +148,9 @@ struct ScanView: View {
                     .padding()
                 }
             }
+            .frame(maxWidth: .infinity)
             .frame(height: 300)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
             .dropDestination(for: URL.self) { urls, _ in
                 guard let url = urls.first, let img = NSImage(contentsOf: url) else { return false }
                 scan.setImage(img); return true
@@ -158,6 +165,7 @@ struct ScanView: View {
                     .keyboardShortcut("v", modifiers: [.command, .shift])
             }
             .controlSize(.large)
+            .glassButtons(glassOn)
 
             TextField("Optional hint, e.g. “from a Lahore street stall”", text: $scan.hint, axis: .vertical)
                 .textFieldStyle(.roundedBorder).lineLimit(1...3)
@@ -168,6 +176,7 @@ struct ScanView: View {
                 Label("Identify Dish", systemImage: "sparkles").frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent).controlSize(.large)
+            .glassButtons(glassOn, prominent: true)
             .keyboardShortcut(.return, modifiers: .command)
             .disabled(scan.image == nil || !store.aiStatus.canSee || scan.phase == .identifying)
 
@@ -195,7 +204,7 @@ struct ScanView: View {
             ContentUnavailableView {
                 Label("Something went wrong", systemImage: "exclamationmark.triangle")
             } description: { Text(message) } actions: {
-                Button("Try Again") { scan.tryAgain() }.buttonStyle(.borderedProminent)
+                Button("Try Again") { scan.tryAgain() }.buttonStyle(.borderedProminent).glassButtons(glassOn, prominent: true)
             }
         case .candidates:
             if let r = scan.result { candidates(r) }
@@ -280,6 +289,7 @@ private struct CandidateRow: View {
     let candidate: DishCandidate
     let best: Bool
     @State private var hover = false
+    @Environment(\.glassOn) private var glassOn
 
     var body: some View {
         HStack(spacing: 16) {
@@ -303,9 +313,26 @@ private struct CandidateRow: View {
             Image(systemName: "chevron.right").foregroundStyle(.tertiary)
         }
         .padding(16)
-        .background(hover ? Theme.accent.opacity(0.08) : Theme.card, in: RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(best ? Theme.accent.opacity(0.5) : Theme.subtle))
+        .modifier(CandidateSurface(hover: hover, best: best, glassOn: glassOn))
         .contentShape(Rectangle())
         .onHover { hover = $0 }
+    }
+}
+
+private struct CandidateSurface: ViewModifier {
+    let hover: Bool
+    let best: Bool
+    let glassOn: Bool
+
+    func body(content: Content) -> some View {
+        if glassOn {
+            content
+                .glassPanel(true, in: RoundedRectangle(cornerRadius: 12), tint: hover ? Theme.accent.opacity(0.18) : nil, interactive: true)
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.accent.opacity(best ? 0.5 : 0)))
+        } else {
+            content
+                .background(hover ? Theme.accent.opacity(0.08) : Theme.card, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(best ? Theme.accent.opacity(0.5) : Theme.subtle))
+        }
     }
 }

@@ -6,6 +6,7 @@ struct RecipesView: View {
     @State private var search = ""
     @State private var favoritesOnly = false
     @State private var editing: Recipe?
+    @Environment(\.glassOn) private var glassOn
 
     private var filtered: [Recipe] {
         store.recipes.filter { r in
@@ -23,11 +24,13 @@ struct RecipesView: View {
                     TextField("Search recipes or ingredients", text: $search).textFieldStyle(.roundedBorder)
                     Toggle(isOn: $favoritesOnly) { Image(systemName: favoritesOnly ? "heart.fill" : "heart") }
                         .toggleStyle(.button).help("Favorites only")
+                        .glassButtons(glassOn)
                 }
                 List(selection: $selection) {
                     ForEach(filtered) { r in RecipeRow(recipe: r).tag(r.id) }
                 }
                 .listStyle(.inset)
+                .scrollContentBackground(glassOn ? .hidden : .automatic)
                 .overlay {
                     if filtered.isEmpty {
                         ContentUnavailableView(store.recipes.isEmpty ? "No recipes yet" : "No matches", systemImage: "book.closed")
@@ -41,8 +44,10 @@ struct RecipesView: View {
                 .buttonStyle(.borderless)
             }
             .padding(12)
+            .glassPanel(glassOn, in: RoundedRectangle(cornerRadius: 18))
             .frame(width: 310)
-            Divider()
+            .padding(glassOn ? 14 : 0)
+            if !glassOn { Divider() }
             Group {
                 if let r = store.recipe(selection) {
                     RecipeDetailView(recipe: r, onVariant: nil, onEdit: { editing = r },

@@ -12,6 +12,7 @@ struct PlatewiseApp: App {
                 .environmentObject(scan)
                 .frame(minWidth: 1020, minHeight: 680)
                 .tint(Theme.accent)
+                .glassThemeRoot()
         }
         .defaultSize(width: 1280, height: 820)
         .commands {
@@ -29,12 +30,15 @@ struct PlatewiseApp: App {
                 .environmentObject(store)
                 .frame(width: 580, height: 660)
                 .tint(Theme.accent)
+                .glassThemeRoot()
         }
     }
 }
 
 struct ContentView: View {
     @EnvironmentObject var store: Store
+    @EnvironmentObject var scan: ScanModel
+    @Environment(\.glassOn) private var glassOn
 
     var body: some View {
         NavigationSplitView {
@@ -47,18 +51,24 @@ struct ContentView: View {
             }
             .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 240)
         } detail: {
-            switch store.section {
-            case .snap: ScanView()
-            case .plan: PlannerView()
-            case .recipes: RecipesView()
-            case .grocery: GroceryView()
-            case .settings: ScrollView { SettingsView().frame(maxWidth: 640) }.frame(maxWidth: .infinity)
+            Group {
+                switch store.section {
+                case .snap: ScanView()
+                case .plan: PlannerView()
+                case .recipes: RecipesView()
+                case .grocery: GroceryView()
+                case .settings: ScrollView { SettingsView().frame(maxWidth: 640) }.frame(maxWidth: .infinity)
+                }
             }
+            .glassBackdrop(glassOn)
         }
         .navigationTitle(store.section.rawValue)
         .task {
             await SelfTest.runIfRequested(store: store)
             await DebugSnapshot.runIfRequested(store: store)
+            #if DEBUG
+            await GlassSnapshot.runIfRequested(store: store, scan: scan)
+            #endif
         }
     }
 }

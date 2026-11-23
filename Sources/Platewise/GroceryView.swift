@@ -5,6 +5,7 @@ struct GroceryView: View {
     @State private var newItem = ""
     @State private var toast: String?
     @State private var confirmClearAll = false
+    @Environment(\.glassOn) private var glassOn
 
     private var remaining: Int { store.grocery.filter { !$0.checked }.count }
 
@@ -14,16 +15,19 @@ struct GroceryView: View {
                 TextField("Add an item, e.g. “2 lb chicken thighs”", text: $newItem)
                     .textFieldStyle(.roundedBorder).onSubmit(add)
                 Button("Add", action: add).disabled(newItem.trimmingCharacters(in: .whitespaces).isEmpty)
+                    .glassButtons(glassOn, prominent: true)
                 Divider().frame(height: 20)
                 Button {
                     let n = store.buildGrocery(week: Days.weekStart(for: Date()))
                     toast = n == 0 ? "No meals planned this week" : "Updated from this week's meal plan"
                 } label: { Label("From This Week", systemImage: "calendar") }
+                    .glassButtons(glassOn)
                 Button {
                     NSPasteboard.general.clearContents()
                     NSPasteboard.general.setString(store.groceryText, forType: .string)
                     toast = "List copied. Paste it into Notes or Messages"
                 } label: { Label("Copy", systemImage: "doc.on.doc") }
+                    .glassButtons(glassOn)
                     .disabled(remaining == 0)
                 Menu {
                     Button("Remove Checked Items") { store.grocery.removeAll { $0.checked } }
@@ -32,10 +36,13 @@ struct GroceryView: View {
                     Button("Clear Entire List", role: .destructive) { confirmClearAll = true }
                 } label: { Image(systemName: "ellipsis.circle") }
                     .menuIndicator(.hidden).fixedSize()
+                    .glassMenu(glassOn)
             }
             .controlSize(.large)
             .padding(14)
-            Divider()
+            .glassPanel(glassOn, in: RoundedRectangle(cornerRadius: 18))
+            .padding(glassOn ? 14 : 0)
+            if !glassOn { Divider() }
 
             if store.grocery.isEmpty {
                 ContentUnavailableView {
@@ -60,6 +67,8 @@ struct GroceryView: View {
                     }
                 }
                 .listStyle(.inset)
+                .clipShape(RoundedRectangle(cornerRadius: glassOn ? 14 : 0))
+                .padding(.horizontal, glassOn ? 14 : 0)
                 HStack {
                     Text("\(remaining) to buy · \(store.grocery.count - remaining) in the cart").font(.callout).foregroundStyle(.secondary)
                     Spacer()

@@ -16,7 +16,7 @@ struct AIStatusBanner: View {
         case .ready:
             Chip(text: "Apple Intelligence · runs on this Mac", symbol: "apple.intelligence")
         case .textOnly:
-            Card {
+            Card(readable: true) {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Photo scanning isn't available", systemImage: "eye.slash").font(.headline)
                     Text("This Mac's Apple Intelligence can write recipes but can't look at photos yet. Type the dish instead.")
@@ -28,7 +28,7 @@ struct AIStatusBanner: View {
                 }
             }
         case .unavailable(let reason):
-            Card {
+            Card(readable: true) {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Apple Intelligence is needed", systemImage: "apple.intelligence").font(.headline)
                     Text(reason).font(.callout).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)

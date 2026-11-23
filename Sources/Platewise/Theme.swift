@@ -25,13 +25,24 @@ struct Chip: View {
 }
 
 struct Card<Content: View>: View {
+    /// Keeps the solid card even with the glass theme (for long text such as recipe steps).
+    var readable = false
     @ViewBuilder var content: Content
+    @Environment(\.glassOn) private var glassOn
+
     var body: some View {
-        content
-            .padding(16)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.card, in: RoundedRectangle(cornerRadius: 12))
-            .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.subtle))
+        if glassOn && !readable {
+            content
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .glassPanel(true, in: RoundedRectangle(cornerRadius: 12))
+        } else {
+            content
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.card, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).strokeBorder(Theme.subtle))
+        }
     }
 }
 
@@ -81,13 +92,15 @@ struct FlowLayout: Layout {
 /// A short message that fades away, e.g. "Added to grocery list".
 struct Toast: ViewModifier {
     @Binding var message: String?
+    @Environment(\.glassOn) private var glassOn
     func body(content: Content) -> some View {
         content.overlay(alignment: .bottom) {
             if let message {
                 Label(message, systemImage: "checkmark.circle.fill")
                     .padding(.horizontal, 14).padding(.vertical, 9)
-                    .background(.regularMaterial, in: Capsule())
-                    .shadow(radius: 6, y: 2)
+                    .background(glassOn ? AnyShapeStyle(Color.clear) : AnyShapeStyle(.regularMaterial), in: Capsule())
+                    .glassPanel(glassOn, in: Capsule())
+                    .shadow(radius: glassOn ? 0 : 6, y: glassOn ? 0 : 2)
                     .padding(.bottom, 20)
                     .transition(.move(edge: .bottom).combined(with: .opacity))
                     .task(id: message) {
